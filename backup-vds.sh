@@ -11,7 +11,7 @@ function backupworker {
     partsize=`ssh root@$hvip "lvs --units b" | grep $vdsname | awk '{ print $4 }'`
     ssh root@$hvip "lvcreate -L20G -s -n lv-snapdata-nl $part" >> /var/log/backups/worker-$pid.log
     ssh root@$hvip "dd if=/dev/vg/lv-snapdata-nl bs=1M | gzip" | gunzip | \
-	dd of=/backup/vds-images/$hvname/$vdsname.img bs=1M >> /var/log/backups/worker-$pid.log
+	dd of=/backup/vds-images/$hvname/$vdsname.img bs=1M >> /var/log/backups/worker-$pid.log 2>&1
     ssh root@$hvip "lvremove -f /dev/vg/lv-snapdata-nl" >> /var/log/backups/worker-$pid.log
     imgsize=`du -b /backup/vds-images/$hvname/$vdsname.img | awk '{ print $1 }'`
     if [[ "$partsize" != "$imgsize"B ]]; then
