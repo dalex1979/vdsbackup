@@ -15,7 +15,8 @@ function backupworker {
     ssh root@$hvip "lvremove -f /dev/vg/lv-snapdata-nl" >> /var/log/backups/worker-$pid.log
     imgsize=`du -b /backup/vds-images/$hvname/$vdsname.img | awk '{ print $1 }'`
     if [[ "$partsize" != "$imgsize"B ]]; then
-        echo size of $vdsname does not match | mail -s "backup failed" dalex@king-servers.com#, notify@king-servers.com
+        echo size of $vdsname does not match | tee /var/log/backups/worker-$pid.log
+        echo size of $vdsname does not match | mail -s "backup failed" dalex@king-servers.com, notify@king-servers.com
     fi
     echo `date +"%Y-%m-%d %H:%M:%S"` vdsname=$vdsname Compressing image >> /var/log/backups/worker-$pid.log
     gzip -f -7 /backup/vds-images/$hvname/$vdsname.img >> /var/log/backups/worker-$pid.log
@@ -33,7 +34,7 @@ find /backup/vds-images -type f -mtime +30 -delete
 
 freesps=`df / | grep "/" | awk '{ print $4 }'`
 if [ $freesps -le 1000000000 ]; then
-    echo not enough free space on `hostname -s` | mail -s "backup failed" dalex@king-servers.com#, notify@king-servers.com
+    echo not enough free space on `hostname -s` | mail -s "backup failed" dalex@king-servers.com, notify@king-servers.com
     exit 1
     else echo ok
 fi
