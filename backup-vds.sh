@@ -11,6 +11,7 @@ function backupworker {
     if [[ "$part" == *"No such file"* ]] ; then 
         echo /etc/xen/auto/$vdsname does not exist | tee /var/log/backups/worker-$pid.log
         echo /etc/xen/auto/$vdsname does not exist | mail -s "backup failed" -r vdsbackup@DS863063.clientshostname.com notify@king-support.com
+        exit 1
     fi
     partsize=`ssh root@$hvip "lvs --units b" | grep -m 1 $vdsname | awk '{ print $4 }'`
     ssh root@$hvip "lvcreate -L20G -s -n lv-snapdata-nl $part" >> /var/log/backups/worker-$pid.log
