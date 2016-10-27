@@ -8,7 +8,11 @@ function backupworker {
     echo `date +"%Y-%m-%d %H:%M:%S"` pid=$pid vdsname=$vdsname hvname=$hvname hvip=$hvip | tee /var/log/backups/worker-$pid.log
     if [ ! -d /backup/vds-images/$hvname ]; then mkdir /backup/vds-images/$hvname; fi
     part=`ssh root@$hvip "cat /etc/xen/auto/$vdsname"  | grep disk | awk -F '[:,]' '{print $2 }'`
-    partsize=`ssh root@$hvip "lvs --units b" | grep $vdsname | awk '{ print $4 }'`
+    if [[ "$part" == *"No such file"* ]] ; then 
+        echo /etc/xen/auto/$vdsname does not exist | tee /var/log/backups/worker-$pid.log
+        echo /etc/xen/auto/$vdsname does not exist | mail -s "backup failed" -r vdsbackup@DS863063.clientshostname.com notify@king-support.com
+    fi
+    partsize=`ssh root@$hvip "lvs --units b" | grep -m 1 $vdsname | awk '{ print $4 }'`
     ssh root@$hvip "lvcreate -L20G -s -n lv-snapdata-nl $part" >> /var/log/backups/worker-$pid.log
     ssh root@$hvip "dd if=/dev/vg/lv-snapdata-nl bs=1M | gzip" | gunzip | \
 	dd of=/backup/vds-images/$hvname/$vdsname.img bs=1M >> /var/log/backups/worker-$pid.log 2>&1
