@@ -10,7 +10,7 @@ function backupworker {
     part=`ssh root@$hvip "cat /etc/xen/auto/$vdsname"  | grep disk | awk -F '[:,]' '{print $2 }'`
     if [[ "$part" == *"No such file"* ]] ; then 
         echo /etc/xen/auto/$vdsname does not exist | tee /var/log/backups/worker-$pid.log
-        echo /etc/xen/auto/$vdsname does not exist | mail -s "backup failed" -r vdsbackup@DS863063.clientshostname.com notify@king-support.com
+        echo /etc/xen/auto/$vdsname does not exist | mail -s "backup status" -u vdsbackup notify@king-support.com
         exit 1
     fi
     partsize=`ssh root@$hvip "lvs --units b" | grep -m 1 $vdsname | awk '{ print $4 }'`
@@ -21,7 +21,7 @@ function backupworker {
     imgsize=`du -b /backup/vds-images/$hvname/$vdsname.img | awk '{ print $1 }'`
     if [[ "$partsize" != "$imgsize"B ]]; then
         echo size of $vdsname does not match | tee /var/log/backups/worker-$pid.log
-        echo size of $vdsname does not match | mail -s "backup failed" dalex@king-servers.com, notify@king-support.com
+        echo size of $vdsname does not match | mail -s "backup status" notify@king-support.com
     fi
     echo `date +"%Y-%m-%d %H:%M:%S"` vdsname=$vdsname Compressing image >> /var/log/backups/worker-$pid.log
     gzip -f -7 /backup/vds-images/$hvname/$vdsname.img >> /var/log/backups/worker-$pid.log
@@ -33,13 +33,17 @@ function backupworker {
 
 MaxWorkers=6
 
+hstname=`hostname`
+echo `date +"%Y-%m-%d %H:%M:%S"` Backup on $hstname started | tee /var/log/backups/worker-$pid.log
+echo `date +"%Y-%m-%d %H:%M:%S"` Backup on $hstname started | mail -s "backup status" notify@king-support.com
+
 cat /dev/null >/var/log/backups/common.log
 
 find /backup/vds-images -type f -mtime +30 -delete
 
 freesps=`df / | grep "/" | awk '{ print $4 }'`
 if [ $freesps -le 1000000000 ]; then
-    echo not enough free space on `hostname -s` | mail -s "backup failed" dalex@king-servers.com, notify@king-support.com
+    echo not enough free space on `hostname -s` | mail -s "backup status" notify@king-support.com
     exit 1
     else echo ok
 fi
@@ -76,3 +80,6 @@ while ((c>0))
     sleep 120
     echo `date +"%Y-%m-%d %H:%M:%S"` left - $c
     done
+
+echo `date +"%Y-%m-%d %H:%M:%S"` Backup on $hstname done!  | tee /var/log/backups/worker-$pid.log
+echo `date +"%Y-%m-%d %H:%M:%S"` Backup on $hstname done!  | mail -s "backup status" notify@king-support.com
