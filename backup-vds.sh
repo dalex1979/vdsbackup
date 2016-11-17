@@ -34,7 +34,7 @@ function backupworker {
 MaxWorkers=6
 
 hstname=`hostname`
-echo `date +"%Y-%m-%d %H:%M:%S"` Backup on $hstname started | tee /var/log/backups/worker-$pid.log
+echo `date +"%Y-%m-%d %H:%M:%S"` Backup on $hstname started | tee /var/log/backups/common.log
 echo `date +"%Y-%m-%d %H:%M:%S"` Backup on $hstname started | mail -s "backup status" notify@king-support.com
 
 cat /dev/null >/var/log/backups/common.log
