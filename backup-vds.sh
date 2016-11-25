@@ -10,7 +10,7 @@ function backupworker {
     part=`ssh root@$hvip "cat /etc/xen/auto/$vdsname 2>&1"`
     if [[ "$part" == *"No such file"* ]] ; then 
         echo /etc/xen/auto/$vdsname does not exist | tee /var/log/backups/worker-$pid.log
-        echo /etc/xen/auto/$vdsname does not exist | mail -s "backup status" -u vdsbackup notify@king-support.com
+        echo /etc/xen/auto/$vdsname does not exist | mail -s "backup status [$vdsname:not exist]" -u vdsbackup notify@king-support.com
         exit 1
     fi
     part=`echo "$part" | grep -m 1 disk | awk -F '[:,]' '{print $2 }'`
@@ -22,7 +22,7 @@ function backupworker {
     imgsize=`du -b /backup/vds-images/$hvname/$vdsname.img | awk '{ print $1 }'`
     if [[ "$partsize" != "$imgsize"B ]]; then
         echo size of $vdsname does not match | tee /var/log/backups/worker-$pid.log
-        echo size of $vdsname does not match | mail -s "backup status" notify@king-support.com
+        echo size of $vdsname does not match | mail -s "backup status  [$vdsname:not match]" notify@king-support.com
     fi
     echo `date +"%Y-%m-%d %H:%M:%S"` vdsname=$vdsname Compressing image >> /var/log/backups/worker-$pid.log
     gzip -f -7 /backup/vds-images/$hvname/$vdsname.img >> /var/log/backups/worker-$pid.log
@@ -36,7 +36,7 @@ MaxWorkers=6
 
 hstname=`hostname`
 echo `date +"%Y-%m-%d %H:%M:%S"` Backup on $hstname started | tee /var/log/backups/common.log
-echo `date +"%Y-%m-%d %H:%M:%S"` Backup on $hstname started | mail -s "backup status" notify@king-support.com
+echo `date +"%Y-%m-%d %H:%M:%S"` Backup on $hstname started | mail -s "backup status [start]" notify@king-support.com
 
 cat /dev/null >/var/log/backups/common.log
 
@@ -83,4 +83,4 @@ while ((c>0))
     done
 
 echo `date +"%Y-%m-%d %H:%M:%S"` Backup on $hstname done!  | tee /var/log/backups/worker-$pid.log
-echo `date +"%Y-%m-%d %H:%M:%S"` Backup on $hstname done!  | mail -s "backup status" notify@king-support.com
+echo `date +"%Y-%m-%d %H:%M:%S"` Backup on $hstname done!  | mail -s "backup status [done]" notify@king-support.com
